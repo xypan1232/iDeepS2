@@ -2,8 +2,8 @@ import sys
 import os
 import numpy
 import pdb
-from keras.models import Sequential, model_from_config
-from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge
+from keras.models import Sequential
+from keras.layers.core import Dense, Dropout, Activation, Flatten
 #from keras.layers import Input, merge, LSTM
 from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import PReLU
@@ -11,28 +11,29 @@ from keras.utils import np_utils, generic_utils
 from keras.optimizers import SGD, RMSprop, Adadelta, Adagrad, Adam
 #from keras.engine.topology import Layer
 from keras.layers import normalization
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
+#from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers import LSTM, Bidirectional, Layer 
 from keras.layers.embeddings import Embedding
-from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D, MaxPooling1D
+#from keras.layers.convolutional import MaxPooling2D,Convolution1D, MaxPooling1D
+from keras.layers import Conv1D, MaxPooling1D
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.constraints import maxnorm
 from keras.models import load_model
-from keras import initializations
+#from keras import initializations
 #from seya.layers.recurrent import Bidirectional
-from sklearn import svm, grid_search
+from sklearn import svm
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.cross_validation import StratifiedKFold
+#from sklearn.cross_validation import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, auc
 from sklearn.externals import joblib 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+#import matplotlib.pyplot as plt
+#import matplotlib.cm as cm
 import random
 from random import choice
 import gzip
@@ -42,8 +43,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
+#from sklearn.cross_validation import train_test_split
+#from sklearn.grid_search import GridSearchCV
 from scipy import sparse
 import pdb
 from math import  sqrt
@@ -449,34 +450,27 @@ def plot_motif(self, data, subseqs):
 
 
 def get_cnn_network_alhphabet(input_length):
-    '''
-     get_feature = theano.function([origin_model.layers[0].input],origin_model.layers[11].get_output(train=False),allow_input_downcast=False)
-    feature = get_feature(data)
-    '''
     print 'configure cnn network'
     nbfilter = 16
 
 
     model = Sequential()
-    model.add(Convolution1D(input_dim=24, input_length=input_length,
-                            nb_filter=nbfilter,
-                            filter_length=10,
-                            border_mode="valid",
+    #model.add(Convolution1D(input_dim=24, input_length=input_length,
+    #                        nb_filter=nbfilter,
+    #                        filter_length=10,
+    #                        border_mode="valid",
                             #activation="relu",
-                            subsample_length=1))
+    #                       subsample_length=1))
+    model.add(Conv1D(nbfilter,
+                 10,
+                 padding='valid',
+                 #activation='relu',
+                 strides=1, input_shape=(101, 24)))
     model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_length=3))
-    
+    model.add(MaxPooling1D(pool_size=3))
+    #pdb.set_trace() 
     model.add(Dropout(0.5))
-    model.add(Bidirectional(LSTM(2*nbfilter, return_sequences = True)))
-    #model.add(MaxPooling1D())
-    #model.add(Attention())
-    #model.add(TimeDistributed(Dense(1, activation='tanh')))
-    #model.add(Flatten())
-    #model.add(Activation('softmax'))
-
-    #model.add(Merge([activations, attention], mode='mul'))
-    model.add(Flatten())
+    model.add(Bidirectional(LSTM(2*nbfilter)))
     model.add(Dropout(0.5))
     model.add(Dense(2*nbfilter, activation='relu'))
 
@@ -568,7 +562,7 @@ def run_network(model, total_hid, training, testing, y, validation, val_y, prote
     #checkpointer = ModelCheckpoint(filepath="models/" + protein + "_bestmodel.hdf5", verbose=0, save_best_only=True)
     earlystopper = EarlyStopping(monitor='val_loss', patience=5, verbose=0)
 
-    model.fit(training, y, batch_size=50, nb_epoch=30, verbose=0, validation_data=(validation, val_y), callbacks=[earlystopper])#, class_weight = class_weight)
+    model.fit(training, y, batch_size=64, nb_epoch=20, verbose=0, validation_data=(validation, val_y), callbacks=[earlystopper])#, class_weight = class_weight)
     
     #pdb.set_trace()
     #get_motif(model, testing, protein, y, index = 0, dir1 = 'seq_cnn1/')
